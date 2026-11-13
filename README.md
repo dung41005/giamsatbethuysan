@@ -8,10 +8,7 @@
 
 ## 🎥 Video Demo Kết Quả Thực Nghiệm
 > 🎬 *Xem video demo quá trình mô phỏng Wokwi và tương tác realtime trên Web Dashboard:*
-<video width="100%" controls>
-  <source src="https://github.com/user-attachments/assets/3d4a73b2-2bf1-4206-a411-1f845f051168" type="video/mp4">
-  Trình duyệt của bạn không hỗ trợ thẻ video.
-</video>
+> 🎬 **[▶️ BẤM VÀO ĐÂY ĐỂ XEM VIDEO DEMO KẾT QUẢ THỰC NGHIỆM](https://github.com/user-attachments/assets/3d4a73b2-2bf1-4206-a411-1f845f051168)**
 ## 📋 1. Thông tin sinh viên & Đề tài
 
 * **Họ và tên:** Lương Anh Dũng
