@@ -1,9 +1,14 @@
+
+
+
+
 # HỆ THỐNG GIÁM SÁT VÀ ĐIỀU KHIỂN BỂ NUÔI THỦY SẢN (IoT + FreeRTOS + ASP.NET Core)
 
 > Bài thực hành **Lab 3 (FreeRTOS) - Đề 4**: Mạch tự động giám sát thông số môi trường cho bể nuôi thủy, hải sản.
 
 ## 🎥 Video Demo Kết Quả Thực Nghiệm
 > 🎬 *Xem video demo quá trình mô phỏng Wokwi và tương tác realtime trên Web Dashboard:*
+> https://github.com/user-attachments/assets/3d4a73b2-2bf1-4206-a411-1f845f051168
 > [![Xem Video Demo](https://drive.google.com/file/d/1ak33hbjMYcai7yO_fMuZXterDPZ3PsvP/view?usp=sharing)](https://drive.google.com/file/d/1ak33hbjMYcai7yO_fMuZXterDPZ3PsvP/view?usp=sharing) 
 
 ## 📋 1. Thông tin sinh viên & Đề tài
