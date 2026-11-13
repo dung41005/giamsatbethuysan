@@ -19,7 +19,7 @@
 
 | Nội dung | Đường dẫn (Link) |
 |---|---|
-| 📄 **Báo cáo Lab 3 (Word)** | [https://docs.google.com/document/d/1JH2_JYIrqCznUZKSSWmT0yk95mAZdyIH/edit#heading=h.g9n9ctp0ia73](https://docs.google.com/document/d/1JH2_JYIrqCznUZKSSWmT0yk95mAZdyIH/edit#heading=h.g9n9ctp0ia73) *(Chi tiết lý thuyết RTOS, Queue, Semaphore & giải thích code)* |
+| 📄 **Báo cáo Lab 3 (Word)** | [https://docs.google.com/document/d/1JH2_JYIrqCznUZKSSWmT0yk95mAZdyIH/edit#heading=h.g9n9ctp0ia73](https://docs.google.com/document/d/1JH2_JYIrqCznUZKSSWmT0yk95mAZdyIH/edit#heading=h.g9n9ctp0ia73) *(Chi tiết lý thuyết RTOS, Queue, Semaphore)* |
 | 🔌 **Mô phỏng Wokwi** | [https://wokwi.com/projects/480567112267484161](https://wokwi.com/projects/480567112267484161) |
 | 🌐 **Website Dashboard (Render)** | [https://giamsatbethuysan.onrender.com](https://giamsatbethuysan.onrender.com) |
 
