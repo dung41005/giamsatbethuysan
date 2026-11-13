@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/.vscode/
+**/*.user
+**/node_modules/
+Dockerfile
+.dockerignore
+README.md
+esp32/

@@ -1,0 +1,605 @@
+﻿/* ==========================================================
+   DASHBOARD GIÁM SÁT BỂ THỦY SẢN
+   Ý tưởng: bảng đồng hồ của trạm nuôi. Hai khối màu lớn (xanh biển = mực nước,
+   hổ phách = nhiệt độ), mỗi khối có một dụng cụ đo vẽ bằng CSS: bể có cảm biến
+   ở nắp và nhiệt kế. Phần còn lại giữ nền sáng, yên tĩnh.
+   ========================================================== */
+
+:root {
+    --foam: #E3F0F1; /* nền trang: màu bọt biển */
+    --paper: #FFFFFF; /* nền thẻ biểu đồ / điều khiển */
+    --ink: #0A2E3A; /* chữ chính */
+    --muted: #4B6B75; /* chữ phụ */
+    --line: #C5DCDF; /* đường viền */
+    --ocean: #0B4F6C; /* khối mực nước */
+    --amber: #F7B538; /* khối nhiệt độ */
+    --series-level: #0B6E99; /* đường biểu đồ mực nước */
+    --series-temp: #D9480F; /* đường biểu đồ nhiệt độ */
+    --ok: #17824A;
+    --bad: #D6393F;
+    --wait: #E0A100;
+    --idle: #8AA4AC;
+    --font: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html, body {
+    background: var(--foam);
+}
+
+body {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.5;
+}
+
+.dash {
+    padding-top: 1.75rem;
+    padding-bottom: 3rem;
+}
+
+/* ===== Thanh tiêu đề ===== */
+.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
+    margin-bottom: 1.75rem;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.brand-mark {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--ocean);
+    color: #fff;
+}
+
+.brand-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+}
+
+.brand-sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: .92rem;
+}
+
+.topbar-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .9rem 1.75rem;
+}
+
+.clock {
+    line-height: 1.25;
+    text-align: right;
+}
+
+.clock-time {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.clock-date {
+    color: var(--muted);
+    font-size: .85rem;
+}
+
+/* ===== Huy hiệu trạng thái ===== */
+.pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .85rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: .85rem;
+    font-weight: 500;
+}
+
+    .status-pill .dot {
+        flex: none;
+        width: .6rem;
+        height: .6rem;
+        border-radius: 50%;
+        background: var(--idle);
+    }
+
+    .status-pill.is-ok .dot {
+        background: var(--ok);
+    }
+
+    .status-pill.is-bad .dot {
+        background: var(--bad);
+    }
+
+    .status-pill.is-wait .dot {
+        background: var(--wait);
+    }
+
+    .status-pill.is-idle .dot {
+        background: var(--idle);
+    }
+
+/* ===== Hai khối số liệu chính ===== */
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.5rem;
+    height: 100%;
+    padding: 1.75rem;
+    border-radius: 22px;
+}
+
+.hero-ocean {
+    background: var(--ocean);
+    color: #fff;
+    --soft: rgba(255, 255, 255, .76);
+    --rule: rgba(255, 255, 255, .24);
+}
+
+.hero-amber {
+    background: var(--amber);
+    color: var(--ink);
+    --soft: rgba(10, 46, 58, .8);
+    --rule: rgba(10, 46, 58, .24);
+}
+
+.hero-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.hero-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.readout {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    margin-top: 1.25rem;
+    line-height: 1;
+}
+
+.readout-num {
+    font-size: clamp(3.75rem, 7vw, 5.75rem);
+    font-weight: 800;
+    letter-spacing: -.045em;
+    font-variant-numeric: tabular-nums;
+}
+
+.readout-unit {
+    color: var(--soft);
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.delta {
+    margin: .9rem 0 1.5rem;
+    color: var(--soft);
+    font-size: .92rem;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: auto 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+}
+
+    .stats dt {
+        color: var(--soft);
+        font-size: .8rem;
+        font-weight: 400;
+    }
+
+    .stats dd {
+        margin: .1rem 0 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+/* Huy hiệu vùng điều khiển hiện tại (chấm màu trùng với dải màu bên cạnh bể) */
+.zone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .6rem;
+    padding: .25rem .85rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .15);
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+    .zone-badge::before {
+        content: '';
+        width: .6rem;
+        height: .6rem;
+        border-radius: 50%;
+        background: var(--zc, rgba(255, 255, 255, .5));
+    }
+
+.is-drain {
+    --zc: #FF8A7A;
+}
+
+.is-safe {
+    --zc: #6EE7A8;
+}
+
+.is-pump50 {
+    --zc: #A5E1F2;
+}
+
+.is-pump100 {
+    --zc: #38BDF8;
+}
+
+.is-out {
+    --zc: rgba(255, 255, 255, .45);
+}
+
+/* ===== Dụng cụ đo 1: bể nước có cảm biến ở nắp =====
+   HC-SR04 đo KHOẢNG CÁCH từ nắp bể xuống mặt nước, nên khoảng cách càng nhỏ
+   thì nước càng đầy. Tia đứt nét thể hiện đúng khoảng cách đang đo. */
+.tank {
+    display: grid;
+    grid-template-columns: 34px 92px 104px;
+    grid-template-rows: auto 280px;
+    column-gap: 8px;
+    align-self: center;
+}
+
+.tank-sensor {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 20px;
+    margin-bottom: 6px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, .92);
+}
+
+    .tank-sensor span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--ocean);
+    }
+
+.tank-scale {
+    position: relative;
+    grid-column: 1;
+    grid-row: 2;
+}
+
+    .tank-scale span {
+        position: absolute;
+        right: 0;
+        top: calc(var(--p) * 1%);
+        transform: translateY(-50%);
+        color: var(--soft);
+        font-size: .72rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+.tank-glass {
+    position: relative;
+    grid-column: 2;
+    grid-row: 2;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, .75);
+    border-radius: 4px 4px 14px 14px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.tank-water {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 100%;
+    border-top: 3px solid rgba(255, 255, 255, .9);
+    background: linear-gradient(#4FD3E4, #1C9DB8);
+    transition: top .8s cubic-bezier(.22, .9, .3, 1);
+}
+
+.tank-beam {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 0;
+    border-left: 2px dashed rgba(255, 255, 255, .95);
+    z-index: 1;
+    transition: height .8s cubic-bezier(.22, .9, .3, 1);
+}
+
+.tank-zones {
+    grid-column: 3;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .tank-zones li {
+        flex: 1 1 0;
+        display: flex;
+        align-items: center;
+        padding-left: .6rem;
+        border-left: 4px solid var(--zc);
+        border-radius: 0 6px 6px 0;
+        color: var(--soft);
+        font-size: .78rem;
+        line-height: 1.2;
+        transition: background-color .4s, color .4s;
+    }
+
+        .tank-zones li.is-active {
+            background: rgba(255, 255, 255, .18);
+            color: #fff;
+            font-weight: 700;
+        }
+
+/* ===== Dụng cụ đo 2: nhiệt kế 0 đến 50 °C ===== */
+.thermo {
+    --tube-h: 280px;
+    display: grid;
+    grid-template-columns: 34px 40px;
+    column-gap: 8px;
+    align-self: center;
+}
+
+.thermo-scale {
+    position: relative;
+    height: var(--tube-h);
+}
+
+    .thermo-scale span {
+        position: absolute;
+        right: 0;
+        top: calc(var(--p) * 1%);
+        transform: translateY(-50%);
+        color: var(--soft);
+        font-size: .72rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+.thermo-tube {
+    position: relative;
+    height: var(--tube-h);
+    overflow: hidden;
+    border: 2px solid rgba(10, 46, 58, .55);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .55);
+}
+
+/* Dải màu cố định theo chiều cao ống; phần "thủy ngân" chỉ để lộ ra từ đáy lên tới mức hiện tại */
+.thermo-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0;
+    background: linear-gradient(to top, #1B6FA8, #2BB5C8 35%, #E8590C 72%, #B3261E);
+    background-size: 100% var(--tube-h);
+    background-position: bottom;
+    transition: height .8s cubic-bezier(.22, .9, .3, 1);
+}
+
+/* ===== Thẻ trắng: biểu đồ + bảng điều khiển ===== */
+.panel {
+    padding: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--paper);
+}
+
+.panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .25rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.panel-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.panel-note {
+    color: var(--muted);
+    font-size: .85rem;
+}
+
+.chart-wrap {
+    position: relative;
+    height: 300px;
+}
+
+.chart-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    color: var(--muted);
+    text-align: center;
+    pointer-events: none;
+}
+
+/* ===== Bảng điều khiển ===== */
+.section-hint {
+    max-width: 70ch;
+    margin: .25rem 0 1.25rem;
+    color: var(--muted);
+    font-size: .92rem;
+}
+
+.device {
+    height: 100%;
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #F3F9F9;
+}
+
+.device-head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.1rem;
+}
+
+.lamp {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #B7CBD0;
+    transition: background-color .3s, box-shadow .3s;
+}
+
+    .lamp.is-on {
+        background: var(--ok);
+        box-shadow: 0 0 0 5px rgba(23, 130, 74, .18);
+    }
+
+.device-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.device-state {
+    margin: 0;
+    color: var(--muted);
+    font-size: .88rem;
+}
+
+.mode-pill {
+    margin-left: auto;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+    .mode-pill.is-auto {
+        background: #D7EEF3;
+        color: #0B5F82;
+    }
+
+    .mode-pill.is-manual {
+        background: #FDEBC0;
+        color: #7A4300;
+    }
+
+.ctl-btn {
+    flex: 1;
+    padding: .75rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s, color .2s;
+}
+
+    .ctl-btn.is-on {
+        background: var(--ok);
+        color: #fff;
+    }
+
+        .ctl-btn.is-on:hover:not(:disabled) {
+            background: #11693B;
+        }
+
+    .ctl-btn.is-off {
+        border-color: #7F9AA2;
+        background: transparent;
+        color: var(--ink);
+    }
+
+        .ctl-btn.is-off:hover:not(:disabled) {
+            border-color: var(--bad);
+            background: #FCE8E9;
+            color: #9C1F26;
+        }
+
+    .ctl-btn:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    .ctl-btn:focus-visible {
+        outline: 3px solid var(--series-level);
+        outline-offset: 2px;
+    }
+
+/* ===== Màn hình hẹp: dụng cụ đo xuống dưới số liệu ===== */
+@media (max-width: 575.98px) {
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 1.25rem;
+    }
+
+    .tank,
+    .thermo {
+        justify-self: start;
+    }
+
+    .clock {
+        text-align: left;
+    }
+}
+
+/* Tôn trọng người dùng tắt hiệu ứng chuyển động */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: .01ms !important;
+    }
+}

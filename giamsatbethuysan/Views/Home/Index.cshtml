@@ -1,0 +1,670 @@
+﻿@{
+    ViewData["Title"] = "Giám sát bể thủy sản";
+}
+
+<div class="container-xl dash">
+
+    <!-- ===== THANH TIÊU ĐỀ: tên hệ thống, đồng hồ, trạng thái kết nối ===== -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 9c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2" />
+                    <path d="M2 16c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="brand-title">Giám sát bể thủy sản</h1>
+                <p class="brand-sub">Dữ liệu trực tiếp từ ESP32 qua MQTT</p>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            <div class="clock">
+                <span class="clock-time" id="clockTime">--:--:--</span>
+                <span class="clock-date" id="clockDate"></span>
+            </div>
+            <div class="pills" role="status" aria-live="polite">
+                <span class="status-pill is-wait" id="webStatus"><span class="dot"></span><span class="label">Web: đang kết nối</span></span>
+                <span class="status-pill is-wait" id="mqttStatus"><span class="dot"></span><span class="label">MQTT: chờ trạng thái</span></span>
+                <span class="status-pill is-idle" id="dataStatus"><span class="dot"></span><span class="label">Dữ liệu: chưa nhận được</span></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== HAI KHỐI SỐ LIỆU: mực nước (xanh biển) và nhiệt độ (hổ phách) ===== -->
+    <div class="row g-4 mb-4">
+
+        <!-- Khối 1: Mực nước + bể nước có cảm biến ở nắp -->
+        <div class="col-lg-6">
+            <section class="hero hero-ocean" aria-labelledby="levelTitle">
+                <div class="hero-main">
+                    <h2 class="hero-title" id="levelTitle">Mực nước hiện tại (m)</h2>
+                    <div><span class="zone-badge" id="levelZone">Chưa có dữ liệu</span></div>
+
+                    <div class="readout">
+                        <span class="readout-num" id="levelValue">--</span>
+                        <span class="readout-unit">m</span>
+                    </div>
+                    <p class="delta" id="levelDelta">Chờ số đo đầu tiên</p>
+
+                    <dl class="stats">
+                        <div><dt>Thấp nhất</dt><dd id="levelMin">--</dd></div>
+                        <div><dt>Trung bình</dt><dd id="levelAvg">--</dd></div>
+                        <div><dt>Cao nhất</dt><dd id="levelMax">--</dd></div>
+                    </dl>
+                </div>
+
+                <!-- Bể nước: cảm biến ở nắp đo khoảng cách xuống mặt nước, mặt nước càng gần nắp thì bể càng đầy -->
+                <div class="tank" aria-hidden="true">
+                    <div class="tank-sensor"><span></span><span></span></div>
+                    <div class="tank-scale">
+                        <span style="--p:0">0</span>
+                        <span style="--p:20">0,5</span>
+                        <span style="--p:40">1,0</span>
+                        <span style="--p:60">1,5</span>
+                        <span style="--p:80">2,0</span>
+                        <span style="--p:100">2,5</span>
+                    </div>
+                    <div class="tank-glass">
+                        <div class="tank-beam" id="levelBeam"></div>
+                        <div class="tank-water" id="levelWater"></div>
+                    </div>
+                    <ul class="tank-zones" id="levelZones">
+                        <li class="is-drain" data-zone="drain">Mở van thoát</li>
+                        <li class="is-safe" data-zone="safe">An toàn</li>
+                        <li class="is-pump50" data-zone="pump50">Bơm 50%</li>
+                        <li class="is-pump100" data-zone="pump100">Bơm 100%</li>
+                        <li class="is-out" data-zone="out">Ngoài vùng</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- Khối 2: Nhiệt độ + nhiệt kế -->
+        <div class="col-lg-6">
+            <section class="hero hero-amber" aria-labelledby="tempTitle">
+                <div class="hero-main">
+                    <h2 class="hero-title" id="tempTitle">Nhiệt độ bể (°C)</h2>
+
+                    <div class="readout">
+                        <span class="readout-num" id="tempValue">--</span>
+                        <span class="readout-unit">°C</span>
+                    </div>
+                    <p class="delta" id="tempDelta">Chờ số đo đầu tiên</p>
+
+                    <dl class="stats">
+                        <div><dt>Thấp nhất</dt><dd id="tempMin">--</dd></div>
+                        <div><dt>Trung bình</dt><dd id="tempAvg">--</dd></div>
+                        <div><dt>Cao nhất</dt><dd id="tempMax">--</dd></div>
+                    </dl>
+                </div>
+
+                <div class="thermo" aria-hidden="true">
+                    <div class="thermo-scale">
+                        <span style="--p:100">0</span>
+                        <span style="--p:80">10</span>
+                        <span style="--p:60">20</span>
+                        <span style="--p:40">30</span>
+                        <span style="--p:20">40</span>
+                        <span style="--p:0">50</span>
+                    </div>
+                    <div class="thermo-tube">
+                        <div class="thermo-fill" id="tempFill"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ===== HAI BIỂU ĐỒ ĐƯỜNG THEO THỜI GIAN THỰC ===== -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <section class="panel h-100" aria-labelledby="levelChartTitle">
+                <div class="panel-head">
+                    <h2 class="panel-title" id="levelChartTitle">Mực nước theo thời gian</h2>
+                    <span class="panel-note">30 lần đo gần nhất, vạch đứt là các ngưỡng điều khiển</span>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="levelChart" role="img" aria-label="Biểu đồ đường mực nước theo thời gian"></canvas>
+                    <div class="chart-empty" id="levelChartEmpty">Chưa có số liệu mực nước. Hãy chạy mô phỏng trên Wokwi để ESP32 bắt đầu gửi dữ liệu.</div>
+                </div>
+            </section>
+        </div>
+        <div class="col-lg-6">
+            <section class="panel h-100" aria-labelledby="tempChartTitle">
+                <div class="panel-head">
+                    <h2 class="panel-title" id="tempChartTitle">Nhiệt độ theo thời gian</h2>
+                    <span class="panel-note">30 lần đo gần nhất</span>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="tempChart" role="img" aria-label="Biểu đồ đường nhiệt độ theo thời gian"></canvas>
+                    <div class="chart-empty" id="tempChartEmpty">Chưa có số liệu nhiệt độ. Hãy chạy mô phỏng trên Wokwi để ESP32 bắt đầu gửi dữ liệu.</div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ===== BẢNG ĐIỀU KHIỂN: máy bơm Vào, van thoát Ra ===== -->
+    <section class="panel" aria-labelledby="controlTitle">
+        <h2 class="panel-title" id="controlTitle">Bảng điều khiển</h2>
+        <p class="section-hint">
+            Bấm Bật hoặc Tắt để chuyển thiết bị sang chế độ thủ công trong <span data-hold-seconds>30</span> giây,
+            sau đó ESP32 tự trở lại điều khiển theo mực nước. ESP32 không gửi phản hồi, nên trạng thái bên dưới là lệnh gần nhất đã gửi.
+        </p>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="device" data-device="pump" data-name="máy bơm nước vào">
+                    <div class="device-head">
+                        <span class="lamp" data-role="lamp"></span>
+                        <div>
+                            <h3 class="device-name">Máy bơm nước Vào</h3>
+                            <p class="device-state" data-role="state">Đang điều khiển theo mực nước</p>
+                        </div>
+                        <span class="mode-pill is-auto" data-role="mode">Tự động</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="ctl-btn is-on" data-control data-state="on"
+                                data-url="@Url.Action("TogglePump", "Home")" aria-label="Bật máy bơm nước vào">
+                            Bật
+                        </button>
+                        <button type="button" class="ctl-btn is-off" data-control data-state="off"
+                                data-url="@Url.Action("TogglePump", "Home")" aria-label="Tắt máy bơm nước vào">
+                            Tắt
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="device" data-device="valve" data-name="van thoát nước ra">
+                    <div class="device-head">
+                        <span class="lamp" data-role="lamp"></span>
+                        <div>
+                            <h3 class="device-name">Van thoát nước Ra</h3>
+                            <p class="device-state" data-role="state">Đang điều khiển theo mực nước</p>
+                        </div>
+                        <span class="mode-pill is-auto" data-role="mode">Tự động</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="ctl-btn is-on" data-control data-state="on"
+                                data-url="@Url.Action("ToggleValve", "Home")" aria-label="Bật van thoát nước ra">
+                            Bật
+                        </button>
+                        <button type="button" class="ctl-btn is-off" data-control data-state="off"
+                                data-url="@Url.Action("ToggleValve", "Home")" aria-label="Tắt van thoát nước ra">
+                            Tắt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Thông báo kết quả gửi lệnh (Bootstrap Toast) -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="appToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="appToastBody"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Html.Raw("https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js")"></script>
+    <script src="@Html.Raw("https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js")"></script>
+
+    <script>
+        (() => {
+            'use strict';
+
+            // ============================================================
+            // 1. CẤU HÌNH (đổi ở đây nếu thay đổi ngưỡng hoặc thang đo)
+            // ============================================================
+
+            const MAX_POINTS = 30;            // số điểm tối đa trên mỗi biểu đồ
+            const STALE_AFTER_MS = 10000;     // quá 10 giây không có số liệu mới thì cảnh báo
+            const MANUAL_HOLD_SECONDS = 30;   // phải trùng MANUAL_HOLD_MS (30000) trong sketch ESP32
+            const LEVEL_SCALE_MAX = 2.5;      // m: đáy bể trên hình vẽ
+            const TEMP_SCALE_MIN = 0;         // °C: đáy nhiệt kế
+            const TEMP_SCALE_MAX = 50;        // °C: đỉnh nhiệt kế
+            const LEVEL_THRESHOLDS = [0.5, 1.0, 1.5, 2.0]; // m: các ngưỡng của thuật toán trên ESP32
+
+            // Các vùng điều khiển tự động, khớp với Task_AlertControl trên ESP32.
+            // Giá trị "mực nước" là khoảng cách từ cảm biến tới mặt nước (theo đề bài).
+            const ZONES = [
+                { id: 'drain',   test: (v) => v < 0.5,   label: 'Mở van thoát trong 10 giây' },
+                { id: 'safe',    test: (v) => v < 1.0,   label: 'Vùng an toàn' },
+                { id: 'pump50',  test: (v) => v <= 1.5,  label: 'Bơm 50% trong 10 giây' },
+                { id: 'pump100', test: (v) => v <= 2.0,  label: 'Bơm 100% trong 20 giây' },
+                { id: 'out',     test: () => true,       label: 'Ngoài vùng điều khiển' }
+            ];
+
+            const SENSORS = {
+                level: { decimals: 2, unit: 'm',  color: '#0B6E99', last: null, stats: newStats() },
+                temp:  { decimals: 1, unit: '°C', color: '#D9480F', last: null, stats: newStats() }
+            };
+
+            const $ = (id) => document.getElementById(id);
+            const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+            const fmt = (v, d) => Number(v).toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
+            const formatTime = (ts) => new Date(ts).toLocaleTimeString('vi-VN', { hour12: false });
+
+            function newStats() {
+                return { min: Infinity, max: -Infinity, sum: 0, count: 0 };
+            }
+
+            let lastDataAt = null; // thời điểm trình duyệt nhận số liệu gần nhất
+
+            // ============================================================
+            // 2. HUY HIỆU TRẠNG THÁI
+            // ============================================================
+
+            /** Đổi màu chấm và nội dung huy hiệu. state: is-ok | is-bad | is-wait | is-idle */
+            function setPill(pill, state, text) {
+                pill.classList.remove('is-ok', 'is-bad', 'is-wait', 'is-idle');
+                pill.classList.add(state);
+                pill.querySelector('.label').textContent = text;
+            }
+
+            const webPill = $('webStatus');
+            const mqttPill = $('mqttStatus');
+            const dataPill = $('dataStatus');
+
+            /** Báo ESP32 còn gửi số liệu hay không, dựa trên thời điểm nhận số liệu gần nhất. */
+            function updateFreshness() {
+                if (lastDataAt === null) {
+                    setPill(dataPill, 'is-idle', 'Dữ liệu: chưa nhận được');
+                    return;
+                }
+
+                const age = Date.now() - lastDataAt;
+                const seconds = Math.floor(age / 1000);
+
+                if (age > STALE_AFTER_MS) {
+                    setPill(dataPill, 'is-bad', 'Dữ liệu: ESP32 ngừng gửi (' + seconds + ' giây)');
+                } else if (seconds < 2) {
+                    setPill(dataPill, 'is-ok', 'Dữ liệu: vừa cập nhật');
+                } else {
+                    setPill(dataPill, 'is-ok', 'Dữ liệu: cập nhật ' + seconds + ' giây trước');
+                }
+            }
+
+            // ============================================================
+            // 3. BIỂU ĐỒ CHART.JS
+            // ============================================================
+
+            Chart.defaults.font.family = "'Be Vietnam Pro', system-ui, sans-serif";
+            Chart.defaults.color = '#4B6B75';
+
+            /** Plugin tự vẽ các vạch ngưỡng nằm ngang (chỉ dùng cho biểu đồ mực nước). */
+            const thresholdLines = {
+                id: 'thresholdLines',
+                afterDatasetsDraw(chart, args, options) {
+                    const lines = (options && options.lines) || [];
+                    const { ctx, chartArea, scales } = chart;
+
+                    ctx.save();
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineWidth = 1;
+                    ctx.font = "11px 'Be Vietnam Pro', sans-serif";
+                    ctx.textAlign = 'right';
+
+                    lines.forEach((value) => {
+                        const y = scales.y.getPixelForValue(value);
+                        if (y < chartArea.top || y > chartArea.bottom) return;
+
+                        ctx.strokeStyle = 'rgba(10, 46, 58, .35)';
+                        ctx.beginPath();
+                        ctx.moveTo(chartArea.left, y);
+                        ctx.lineTo(chartArea.right, y);
+                        ctx.stroke();
+
+                        ctx.fillStyle = 'rgba(10, 46, 58, .65)';
+                        ctx.fillText(fmt(value, 1) + ' m', chartArea.right - 4, y - 4);
+                    });
+
+                    ctx.restore();
+                }
+            };
+
+            /** Tô nền dưới đường biểu đồ bằng dải màu nhạt dần xuống đáy. */
+            function areaGradient(chart, color) {
+                const { ctx, chartArea } = chart;
+                if (!chartArea) return color + '22';
+
+                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                gradient.addColorStop(0, color + '55');
+                gradient.addColorStop(1, color + '05');
+                return gradient;
+            }
+
+            /** Tạo biểu đồ đường rỗng; số liệu được thêm dần khi SignalR đẩy về. */
+            function createLineChart(canvasId, kind, extra) {
+                const sensor = SENSORS[kind];
+                const plugins = {
+                    legend: { display: false },
+                    tooltip: {
+                        displayColors: false,
+                        callbacks: {
+                            label: (item) => fmt(item.parsed.y, sensor.decimals) + ' ' + sensor.unit
+                        }
+                    }
+                };
+                if (extra.thresholds) {
+                    plugins.thresholdLines = { lines: extra.thresholds };
+                }
+
+                return new Chart($(canvasId).getContext('2d'), {
+                    type: 'line',
+                    plugins: extra.thresholds ? [thresholdLines] : [],
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            borderColor: sensor.color,
+                            backgroundColor: (context) => areaGradient(context.chart, sensor.color),
+                            pointBackgroundColor: sensor.color,
+                            borderWidth: 2.5,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: plugins,
+                        scales: {
+                            x: { grid: { display: false }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+                            y: Object.assign({ grid: { color: 'rgba(10, 46, 58, .08)' } }, extra.y || {})
+                        }
+                    }
+                });
+            }
+
+            const charts = {
+                // Trục mực nước cố định 0 đến 2,5 m để các vạch ngưỡng luôn hiện đúng vị trí
+                level: createLineChart('levelChart', 'level', {
+                    thresholds: LEVEL_THRESHOLDS,
+                    y: { suggestedMin: 0, suggestedMax: LEVEL_SCALE_MAX }
+                }),
+                temp: createLineChart('tempChart', 'temp', {})
+            };
+
+            /** Thêm một điểm vào biểu đồ, giữ tối đa MAX_POINTS điểm. */
+            function addPoint(chart, label, value) {
+                const labels = chart.data.labels;
+                const data = chart.data.datasets[0].data;
+
+                labels.push(label);
+                data.push(value);
+
+                if (labels.length > MAX_POINTS) {
+                    labels.shift();
+                    data.shift();
+                }
+
+                chart.update('none');
+            }
+
+            // ============================================================
+            // 4. CẬP NHẬT GIAO DIỆN KHI CÓ SỐ ĐO MỚI
+            // ============================================================
+
+            /** So sánh với lần đo trước và hiển thị chênh lệch. */
+            function updateDelta(kind, value) {
+                const sensor = SENSORS[kind];
+                const el = $(kind + 'Delta');
+
+                if (sensor.last === null) {
+                    el.textContent = 'Số đo đầu tiên';
+                } else {
+                    const diff = value - sensor.last;
+                    if (Math.abs(diff) < Math.pow(10, -sensor.decimals) / 2) {
+                        el.textContent = 'Không đổi so với lần đo trước';
+                    } else {
+                        const arrow = diff > 0 ? '▲' : '▼';
+                        el.textContent = arrow + ' ' + fmt(Math.abs(diff), sensor.decimals) + ' ' + sensor.unit + ' so với lần đo trước';
+                    }
+                }
+
+                sensor.last = value;
+            }
+
+            /** Cập nhật thấp nhất / trung bình / cao nhất kể từ khi mở trang. */
+            function updateStats(kind, value) {
+                const sensor = SENSORS[kind];
+                const s = sensor.stats;
+
+                s.min = Math.min(s.min, value);
+                s.max = Math.max(s.max, value);
+                s.sum += value;
+                s.count += 1;
+
+                $(kind + 'Min').textContent = fmt(s.min, sensor.decimals);
+                $(kind + 'Avg').textContent = fmt(s.sum / s.count, sensor.decimals);
+                $(kind + 'Max').textContent = fmt(s.max, sensor.decimals);
+            }
+
+            /** Di chuyển mặt nước và tia đo trong bể theo khoảng cách vừa đo. */
+            function moveTank(value) {
+                const percent = clamp(value / LEVEL_SCALE_MAX, 0, 1) * 100;
+                $('levelWater').style.top = percent + '%';
+                $('levelBeam').style.height = percent + '%';
+            }
+
+            /** Nâng cột nhiệt kế theo nhiệt độ vừa đo. */
+            function moveThermometer(value) {
+                const percent = clamp((value - TEMP_SCALE_MIN) / (TEMP_SCALE_MAX - TEMP_SCALE_MIN), 0, 1) * 100;
+                $('tempFill').style.height = percent + '%';
+            }
+
+            /** Xác định mực nước đang ở vùng điều khiển nào, rồi đánh dấu trên huy hiệu và bên cạnh bể. */
+            function updateZone(value) {
+                const zone = ZONES.find((z) => z.test(value));
+
+                const badge = $('levelZone');
+                badge.textContent = zone.label;
+                badge.className = 'zone-badge is-' + zone.id;
+
+                document.querySelectorAll('#levelZones li').forEach((li) => {
+                    li.classList.toggle('is-active', li.dataset.zone === zone.id);
+                });
+            }
+
+            /**
+             * Hiển thị một số đo mới: số lớn, chênh lệch, thống kê, dụng cụ đo và biểu đồ.
+             * kind: 'level' | 'temp'  (khớp với tiền tố id trong HTML)
+             */
+            function showReading(kind, value, timestamp) {
+                const number = Number(value);
+                const sensor = SENSORS[kind];
+
+                lastDataAt = Date.now();
+
+                $(kind + 'Value').textContent = fmt(number, sensor.decimals);
+                $(kind + 'ChartEmpty').classList.add('d-none');
+
+                updateDelta(kind, number);
+                updateStats(kind, number);
+
+                if (kind === 'level') {
+                    moveTank(number);
+                    updateZone(number);
+                } else {
+                    moveThermometer(number);
+                }
+
+                addPoint(charts[kind], formatTime(timestamp), number);
+                updateFreshness();
+            }
+
+            // ============================================================
+            // 5. SIGNALR: NHẬN DỮ LIỆU REALTIME TỪ SERVER
+            // ============================================================
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl('@Url.Content("~/sensorHub")')
+                .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+                .configureLogging(signalR.LogLevel.Warning)
+                .build();
+
+            // Tên sự kiện phải khớp với SensorHubEvents trong SensorHub.cs
+            connection.on('ReceiveLevel', (value, timestamp) => showReading('level', value, timestamp));
+            connection.on('ReceiveTemperature', (value, timestamp) => showReading('temp', value, timestamp));
+
+            connection.on('ReceiveMqttStatus', (isConnected) => {
+                setPill(mqttPill, isConnected ? 'is-ok' : 'is-bad',
+                    isConnected ? 'MQTT: đã kết nối' : 'MQTT: mất kết nối');
+            });
+
+            connection.onreconnecting(() => {
+                setPill(webPill, 'is-wait', 'Web: đang kết nối lại');
+                setPill(mqttPill, 'is-wait', 'MQTT: chờ trạng thái');
+            });
+
+            connection.onreconnected(() => setPill(webPill, 'is-ok', 'Web: đã kết nối'));
+
+            // Hết số lần tự kết nối lại: thử mở kết nối mới sau 5 giây.
+            connection.onclose(() => {
+                setPill(webPill, 'is-bad', 'Web: mất kết nối');
+                setTimeout(startConnection, 5000);
+            });
+
+            async function startConnection() {
+                try {
+                    await connection.start();
+                    setPill(webPill, 'is-ok', 'Web: đã kết nối');
+                } catch (error) {
+                    console.error('Không kết nối được SignalR:', error);
+                    setPill(webPill, 'is-bad', 'Web: mất kết nối');
+                    setTimeout(startConnection, 5000);
+                }
+            }
+
+            startConnection();
+
+            // ============================================================
+            // 6. NÚT ĐIỀU KHIỂN: GỌI FETCH API XUỐNG CONTROLLER
+            // ============================================================
+
+            // Trạng thái hiển thị của từng thiết bị. manualUntil: mốc hết thời gian giữ chế độ thủ công.
+            const devices = {
+                pump:  { isOn: false, manualUntil: 0, sentAt: '' },
+                valve: { isOn: false, manualUntil: 0, sentAt: '' }
+            };
+
+            const toastEl = $('appToast');
+            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 4000 });
+
+            /** Hiện thông báo góc dưới bên phải. type: 'success' | 'danger' */
+            function showToast(message, type) {
+                toastEl.classList.remove('text-bg-success', 'text-bg-danger');
+                toastEl.classList.add(type === 'success' ? 'text-bg-success' : 'text-bg-danger');
+                $('appToastBody').textContent = message;
+                toast.show();
+            }
+
+            /** Vẽ lại đèn, trạng thái và chế độ (thủ công còn bao nhiêu giây hoặc tự động) của một thiết bị. */
+            function renderDevice(key) {
+                const device = devices[key];
+                const tile = document.querySelector('[data-device="' + key + '"]');
+                const lamp = tile.querySelector('[data-role="lamp"]');
+                const state = tile.querySelector('[data-role="state"]');
+                const mode = tile.querySelector('[data-role="mode"]');
+
+                const remaining = Math.ceil((device.manualUntil - Date.now()) / 1000);
+
+                if (remaining > 0) {
+                    lamp.classList.toggle('is-on', device.isOn);
+                    state.textContent = 'Lệnh gần nhất: ' + (device.isOn ? 'bật' : 'tắt') + ' lúc ' + device.sentAt;
+                    mode.textContent = 'Thủ công, còn ' + remaining + ' giây';
+                    mode.className = 'mode-pill is-manual';
+                } else {
+                    lamp.classList.remove('is-on');
+                    state.textContent = 'Đang điều khiển theo mực nước';
+                    mode.textContent = 'Tự động';
+                    mode.className = 'mode-pill is-auto';
+                }
+            }
+
+            /**
+             * Gửi lệnh bật/tắt tới Controller (POST JSON { isOn }).
+             * Controller publish lệnh MQTT xuống ESP32. Trong lúc chờ, khóa nút của thiết bị đó để tránh bấm đúp.
+             */
+            async function sendControl(button) {
+                const tile = button.closest('[data-device]');
+                const key = tile.dataset.device;
+                const groupButtons = tile.querySelectorAll('button[data-control]');
+                const isOn = button.dataset.state === 'on';
+                const action = isOn ? 'bật' : 'tắt';
+                const deviceName = tile.dataset.name;
+
+                groupButtons.forEach((b) => (b.disabled = true));
+
+                try {
+                    const response = await fetch(button.dataset.url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isOn: isOn })
+                    });
+
+                    const result = await response.json().catch(() => ({}));
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || 'Máy chủ trả về lỗi ' + response.status + '.');
+                    }
+
+                    devices[key].isOn = isOn;
+                    devices[key].sentAt = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+                    devices[key].manualUntil = Date.now() + MANUAL_HOLD_SECONDS * 1000;
+                    renderDevice(key);
+
+                    showToast('Đã gửi lệnh ' + action + ' ' + deviceName + '.', 'success');
+                } catch (error) {
+                    const reason = error instanceof TypeError
+                        ? 'Không kết nối được tới máy chủ. Kiểm tra mạng rồi thử lại.'
+                        : error.message;
+                    showToast('Chưa gửi được lệnh ' + action + ' ' + deviceName + '. ' + reason, 'danger');
+                } finally {
+                    groupButtons.forEach((b) => (b.disabled = false));
+                }
+            }
+
+            document.querySelectorAll('button[data-control]').forEach((button) => {
+                button.addEventListener('click', () => sendControl(button));
+            });
+
+            document.querySelectorAll('[data-hold-seconds]').forEach((el) => {
+                el.textContent = MANUAL_HOLD_SECONDS;
+            });
+
+            // ============================================================
+            // 7. ĐỒNG HỒ VÀ BỘ ĐẾM 1 GIÂY
+            // ============================================================
+
+            /** Chạy mỗi giây: đồng hồ, độ "tươi" của số liệu, đếm ngược chế độ thủ công. */
+            function tick() {
+                const now = new Date();
+                $('clockTime').textContent = now.toLocaleTimeString('vi-VN', { hour12: false });
+                $('clockDate').textContent = now.toLocaleDateString('vi-VN', {
+                    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'
+                });
+
+                updateFreshness();
+                renderDevice('pump');
+                renderDevice('valve');
+            }
+
+            tick();
+            setInterval(tick, 1000);
+        })();
+    </script>
+}
