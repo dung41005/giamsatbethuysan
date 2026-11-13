@@ -4,7 +4,7 @@
 
 ## 🎥 Video Demo Kết Quả Thực Nghiệm
 > 🎬 *Xem video demo quá trình mô phỏng Wokwi và tương tác realtime trên Web Dashboard:*
-> [![Xem Video Demo](https://drive.google.com/file/d/1ak33hbjMYcai7yO_fMuZXterDPZ3PsvP/view)](https://github.com/<dung41005>/giamsatbethuysan) *(Thay link video thực tế của bạn tại đây)*
+> [![Xem Video Demo](https://drive.google.com/file/d/1ak33hbjMYcai7yO_fMuZXterDPZ3PsvP/view?usp=sharing)](https://github.com/<dung41005>/giamsatbethuysan) *(Thay link video thực tế của bạn tại đây)*
 
 ## 📋 1. Thông tin sinh viên & Đề tài
 
